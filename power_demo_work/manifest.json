@@ -1,0 +1,33 @@
+{
+  "created_at_unix": 1774911959,
+  "note": "This is a small demo package assembled from public sources. It is intended for exploration / Kaggle demo, not full training.",
+  "files": [
+    {
+      "source": "PGLib-OPF",
+      "url": "https://raw.githubusercontent.com/power-grid-lib/pglib-opf/master/pglib_opf_case118_ieee.m",
+      "saved_as": "pglib/pglib_opf_case118_ieee.m",
+      "bytes": 80336
+    },
+    {
+      "source": "OPFData",
+      "object_name": "dataset_release_1/pglib_opf_case14_ieee_0.tar.gz",
+      "url": "https://storage.googleapis.com/gridopt-dataset/dataset_release_1/pglib_opf_case14_ieee_0.tar.gz",
+      "saved_as": "opfdata/dataset_release_1__pglib_opf_case14_ieee_0.tar.gz",
+      "bytes": 27920518,
+      "extracted_to": "opfdata/dataset_release_1__pglib_opf_case14_ieee_0_extracted"
+    },
+    {
+      "source": "PowerGraph",
+      "file_id": 50083479,
+      "name": "dataset_cascades.zip",
+      "url": "https://ndownloader.figshare.com/files/50083479",
+      "saved_as": "powergraph/dataset_cascades.zip",
+      "bytes": 58056908,
+      "extracted_to": "powergraph/dataset_cascades_extracted"
+    }
+  ],
+  "summary": {
+    "total_files": 3,
+    "total_bytes": 86057762
+  }
+}
