@@ -141,7 +141,7 @@ This is convenient and compatible with common PyG workflows, but not yet a true 
 
 ## 7) Quick start
 
-## 7.1 Install
+### 7.1 Install
 
 Core Python runtime is sufficient for dict outputs; optional packages enable PyG tensors.
 
@@ -152,19 +152,19 @@ python -m pip install requests
 python -m pip install torch torch-geometric
 ```
 
-## 7.2 Download demo data
+### 7.2 Download demo data
 
 ```bash
 python download_dataset.py
 ```
 
-## 7.3 Run preprocessing example
+### 7.3 Run preprocessing example
 
 ```bash
 python example_usage.py
 ```
 
-## 7.4 Run validation notebook
+### 7.4 Run validation notebook
 
 Open and run:
 

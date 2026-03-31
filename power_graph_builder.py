@@ -264,7 +264,9 @@ class PowerGraphBuilder:
         merge_solution:     bool = False,
     ) -> None:
         if normalization_mode not in {"dataset", "graph"}:
-            raise ValueError("normalization_mode must be either 'dataset' or 'graph'")
+            raise ValueError(
+                f"normalization_mode must be either 'dataset' or 'graph', got '{normalization_mode}'"
+            )
         self.normalize_features = normalize_features
         self.include_solution   = include_solution
         self.include_links      = include_links
@@ -378,8 +380,8 @@ class PowerGraphBuilder:
             self._edge_norm = FeatureNormalizer().fit(all_e)
         return self
 
-    def has_fitted_normalizers(self) -> bool:
-        """Return True when both node and edge shared normalizers are available."""
+    def has_both_fitted_normalizers(self) -> bool:
+        """Return True only when both node and edge shared normalizers are available."""
         return self._node_norm is not None and self._edge_norm is not None
 
     # ------------------------------------------------------------------
@@ -514,13 +516,21 @@ class PowerGraphBuilder:
             e_type = [row[EDGE_RAW_MAX:] for row in ea_rows]
 
             if self.normalization_mode == "dataset":
-                if self._node_norm is not None and self._edge_norm is not None:
+                if self.has_both_fitted_normalizers():
                     x_raw = self._node_norm.transform(x_raw)
                     e_raw = self._edge_norm.transform(e_raw)
                 else:
+                    missing = []
+                    if self._node_norm is None:
+                        missing.append("node")
+                    if self._edge_norm is None:
+                        missing.append("edge")
+                    missing_text = ", ".join(missing) if missing else "unknown"
                     warnings.warn(
                         "normalize_features=True with normalization_mode='dataset' but shared "
-                        "normalizers are not fitted; falling back to per-graph normalization.",
+                        f"{missing_text} normalizers are not fitted; falling back to per-graph normalization. "
+                        "Call fit_normalizers() on a collection of graphs before building with "
+                        "dataset-level normalization.",
                         UserWarning,
                         stacklevel=2,
                     )
