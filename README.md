@@ -90,7 +90,7 @@ power-graph-risk-learning/
 
 ## 4) Quick start
 
-## Installation
+### Installation
 
 ```bash
 python -m pip install --upgrade pip
