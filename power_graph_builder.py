@@ -52,7 +52,8 @@ Node features (x):
 
 Edge features (edge_attr):
   Raw features for ac_line / transformer, zeros for link edges, followed by a
-  3-dim one-hot type encoding [is_ac_line, is_transformer, is_link].
+  5-dim one-hot type encoding
+  [is_ac_line, is_transformer, is_generator_link, is_load_link, is_shunt_link].
 
 Labels (y):
   Scalar OPF objective value from metadata (float).
@@ -116,7 +117,7 @@ LINK_FEAT_DIM       = 0   # link edges carry no raw features
 
 # One-hot encoding widths
 NODE_TYPE_DIM = 4   # [bus, gen, load, shunt]
-EDGE_TYPE_DIM = 3   # [ac_line, transformer, link]
+EDGE_TYPE_DIM = 5   # [ac_line, transformer, generator_link, load_link, shunt_link]
 
 # Padded raw feature width (max of all raw dims)
 NODE_RAW_MAX = max(BUS_FEAT_DIM, GEN_FEAT_DIM, LOAD_FEAT_DIM, SHUNT_FEAT_DIM)  # 11
@@ -124,7 +125,7 @@ EDGE_RAW_MAX = max(AC_LINE_FEAT_DIM, TRANSFORMER_FEAT_DIM, LINK_FEAT_DIM)       
 
 # Final feature dimensions
 NODE_FEAT_DIM = NODE_RAW_MAX + NODE_TYPE_DIM   # 15
-EDGE_FEAT_DIM = EDGE_RAW_MAX + EDGE_TYPE_DIM   # 14
+EDGE_FEAT_DIM = EDGE_RAW_MAX + EDGE_TYPE_DIM   # 16
 
 # Solution feature dimensions
 SOL_NODE_DIM = 2   # (angle, vmag) for bus  /  (P, Q) for gen  /  zeros otherwise
@@ -232,15 +233,26 @@ class PowerGraphBuilder:
     ----------
     normalize_features : bool
         If True, apply per-feature StandardScaler normalisation to node and
-        edge raw features within each graph.  Default: False.
-        Call ``fit_normalizers`` on a collection of graphs to fit shared
-        normalisers across a dataset.
+        edge features. Default: False.
+        If ``normalization_mode="dataset"``, the builder uses statistics
+        fitted by ``fit_normalizers``. If no fitted statistics are available
+        in dataset mode, the builder falls back to per-graph normalisation and
+        emits a warning.
     include_solution : bool
         If True, attach ground-truth solution tensors (sol_node, sol_edge)
         as additional attributes.  Default: True.
     include_links : bool
         If True, add generator/load/shunt link edges to the graph.
         Default: True.
+    normalization_mode : str
+        Either ``"dataset"`` (recommended for reproducible training pipelines)
+        or ``"graph"`` (fit/transform independently per graph).
+        Default: ``"dataset"``.
+    merge_solution : bool
+        If True and ``include_solution=True``, merge solution tensors into
+        model-ready dynamic features ``x_dyn`` and ``edge_attr_dyn`` while
+        retaining ``sol_node`` and ``sol_edge`` for supervision/debugging.
+        Default: False.
     """
 
     def __init__(
@@ -248,10 +260,18 @@ class PowerGraphBuilder:
         normalize_features: bool = False,
         include_solution:   bool = True,
         include_links:      bool = True,
+        normalization_mode: str = "dataset",
+        merge_solution:     bool = False,
     ) -> None:
+        if normalization_mode not in {"dataset", "graph"}:
+            raise ValueError(
+                f"normalization_mode must be either 'dataset' or 'graph', got '{normalization_mode}'"
+            )
         self.normalize_features = normalize_features
         self.include_solution   = include_solution
         self.include_links      = include_links
+        self.normalization_mode = normalization_mode
+        self.merge_solution     = merge_solution
 
         # Shared normalizers — populated by fit_normalizers()
         self._node_norm: Optional[FeatureNormalizer] = None
@@ -350,14 +370,19 @@ class PowerGraphBuilder:
         for g in graphs:
             x = g["x"] if isinstance(g, dict) else g.x.tolist()
             e = g["edge_attr"] if isinstance(g, dict) else g.edge_attr.tolist()
-            all_x.extend(x)
-            all_e.extend(e)
+            # Fit only on raw feature blocks; keep one-hot type bits untouched.
+            all_x.extend([row[:NODE_RAW_MAX] for row in x])
+            all_e.extend([row[:EDGE_RAW_MAX] for row in e])
 
         if all_x:
             self._node_norm = FeatureNormalizer().fit(all_x)
         if all_e:
             self._edge_norm = FeatureNormalizer().fit(all_e)
         return self
+
+    def has_both_fitted_normalizers(self) -> bool:
+        """Return True only when both node and edge shared normalizers are available."""
+        return self._node_norm is not None and self._edge_norm is not None
 
     # ------------------------------------------------------------------
     # Internal construction
@@ -396,39 +421,44 @@ class PowerGraphBuilder:
         # ---- 2. Build node feature matrix  --------------------------------
         #  Each row = zero-padded raw features + one-hot type encoding
         x_rows: List[List[float]] = []
+        node_type_idx: List[int] = []
 
         # buses  (type idx = 0)
         for raw in buses:
             feats = _pad_or_truncate(_to_float_list(raw), NODE_RAW_MAX)
             x_rows.append(feats + _one_hot(0, NODE_TYPE_DIM))
+            node_type_idx.append(0)
 
         # generators (type idx = 1)
         for raw in generators:
             feats = _pad_or_truncate(_to_float_list(raw), NODE_RAW_MAX)
             x_rows.append(feats + _one_hot(1, NODE_TYPE_DIM))
+            node_type_idx.append(1)
 
         # loads (type idx = 2)
         for raw in loads:
             feats = _pad_or_truncate(_to_float_list(raw), NODE_RAW_MAX)
             x_rows.append(feats + _one_hot(2, NODE_TYPE_DIM))
+            node_type_idx.append(2)
 
         # shunts (type idx = 3)
         for raw in shunts:
             feats = _pad_or_truncate(_to_float_list(raw), NODE_RAW_MAX)
             x_rows.append(feats + _one_hot(3, NODE_TYPE_DIM))
+            node_type_idx.append(3)
 
         # ---- 3. Build edge index + edge feature matrix  -------------------
         #  Edge ordering: ac_line | transformer | [gen/load/shunt links]
         src_list: List[int] = []
         dst_list: List[int] = []
         ea_rows:  List[List[float]] = []
+        edge_type_idx: List[int] = []
 
         def _add_edges(
             edge_data: Dict[str, Any],
             src_offset: int,
             dst_offset: int,
-            raw_feat_width: int,
-            type_idx: int,       # 0=ac_line, 1=transformer, 2=link
+            type_idx: int,       # 0=ac_line, 1=transformer, 2=generator_link, 3=load_link, 4=shunt_link
         ) -> None:
             senders   = edge_data.get("senders",   [])
             receivers = edge_data.get("receivers", [])
@@ -442,18 +472,19 @@ class PowerGraphBuilder:
                 raw = _to_float_list(features[i]) if i < len(features) else []
                 feats = _pad_or_truncate(raw, EDGE_RAW_MAX)
                 ea_rows.append(feats + _one_hot(type_idx, EDGE_TYPE_DIM))
+                edge_type_idx.append(type_idx)
 
         # ac_line: bus → bus
         _add_edges(
             grid_edges.get("ac_line", {}),
             src_offset=bus_offset, dst_offset=bus_offset,
-            raw_feat_width=AC_LINE_FEAT_DIM, type_idx=0,
+            type_idx=0,
         )
         # transformer: bus → bus
         _add_edges(
             grid_edges.get("transformer", {}),
             src_offset=bus_offset, dst_offset=bus_offset,
-            raw_feat_width=TRANSFORMER_FEAT_DIM, type_idx=1,
+            type_idx=1,
         )
 
         if self.include_links:
@@ -461,34 +492,60 @@ class PowerGraphBuilder:
             _add_edges(
                 grid_edges.get("generator_link", {}),
                 src_offset=gen_offset, dst_offset=bus_offset,
-                raw_feat_width=LINK_FEAT_DIM, type_idx=2,
+                type_idx=2,
             )
             # load_link: load → bus
             _add_edges(
                 grid_edges.get("load_link", {}),
                 src_offset=load_offset, dst_offset=bus_offset,
-                raw_feat_width=LINK_FEAT_DIM, type_idx=2,
+                type_idx=3,
             )
             # shunt_link: shunt → bus
             _add_edges(
                 grid_edges.get("shunt_link", {}),
                 src_offset=shunt_offset, dst_offset=bus_offset,
-                raw_feat_width=LINK_FEAT_DIM, type_idx=2,
+                type_idx=4,
             )
 
         # ---- 4. Optional normalisation  -----------------------------------
         if self.normalize_features:
-            if self._node_norm is not None:
-                x_rows = self._node_norm.transform(x_rows)
+            # Only normalize raw blocks, preserving one-hot type encodings.
+            x_raw = [row[:NODE_RAW_MAX] for row in x_rows]
+            x_type = [row[NODE_RAW_MAX:] for row in x_rows]
+            e_raw = [row[:EDGE_RAW_MAX] for row in ea_rows]
+            e_type = [row[EDGE_RAW_MAX:] for row in ea_rows]
+
+            if self.normalization_mode == "dataset":
+                if self.has_both_fitted_normalizers():
+                    x_raw = self._node_norm.transform(x_raw)
+                    e_raw = self._edge_norm.transform(e_raw)
+                else:
+                    missing = []
+                    if self._node_norm is None:
+                        missing.append("node")
+                    if self._edge_norm is None:
+                        missing.append("edge")
+                    missing_text = ", ".join(missing) if missing else "unknown"
+                    warnings.warn(
+                        "normalize_features=True with normalization_mode='dataset' but shared "
+                        f"{missing_text} normalizers are not fitted; falling back to per-graph normalization. "
+                        "Call fit_normalizers() on a collection of graphs before building with "
+                        "dataset-level normalization.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+                    if x_raw:
+                        x_raw = FeatureNormalizer().fit_transform(x_raw)
+                    if e_raw:
+                        e_raw = FeatureNormalizer().fit_transform(e_raw)
             else:
-                # per-graph normalisation when no shared normalizer is fitted
-                if x_rows:
-                    x_rows = FeatureNormalizer().fit_transform(x_rows)
-            if self._edge_norm is not None:
-                ea_rows = self._edge_norm.transform(ea_rows)
-            else:
-                if ea_rows:
-                    ea_rows = FeatureNormalizer().fit_transform(ea_rows)
+                if x_raw:
+                    x_raw = FeatureNormalizer().fit_transform(x_raw)
+                if e_raw:
+                    e_raw = FeatureNormalizer().fit_transform(e_raw)
+
+            x_rows = [r + t for r, t in zip(x_raw, x_type)]
+            ea_rows = [r + t for r, t in zip(e_raw, e_type)]
 
         # ---- 5. Solution tensors (per-node and per-edge)  -----------------
         sol_node_rows: List[List[float]] = [[0.0] * SOL_NODE_DIM for _ in range(n_nodes)]
@@ -544,11 +601,36 @@ class PowerGraphBuilder:
             "n_shunt": n_shunt,
             "n_nodes": n_nodes,
             "n_edges": len(src_list),
+            "node_type_counts": {
+                "bus": n_bus,
+                "generator": n_gen,
+                "load": n_load,
+                "shunt": n_shunt,
+            },
+            "edge_type_counts": {
+                "ac_line": sum(1 for t in edge_type_idx if t == 0),
+                "transformer": sum(1 for t in edge_type_idx if t == 1),
+                "generator_link": sum(1 for t in edge_type_idx if t == 2),
+                "load_link": sum(1 for t in edge_type_idx if t == 3),
+                "shunt_link": sum(1 for t in edge_type_idx if t == 4),
+            },
+            "schema_version": "v2",
+            "normalization_mode": self.normalization_mode if self.normalize_features else "none",
         }
+
+        extra: Dict[str, Any] = {
+            "node_type": node_type_idx,
+            "edge_type": edge_type_idx,
+        }
+        if self.include_solution and self.merge_solution:
+            x_dyn = [x + s for x, s in zip(x_rows, sol_node_rows)]
+            edge_attr_dyn = [e + s for e, s in zip(ea_rows, sol_edge_rows)]
+            extra["x_dyn"] = x_dyn
+            extra["edge_attr_dyn"] = edge_attr_dyn
 
         return _package_graph(
             x_rows, edge_index_pair, ea_rows,
-            y, sol_node_rows, sol_edge_rows, meta,
+            y, sol_node_rows, sol_edge_rows, meta, extra=extra,
         )
 
 
@@ -564,6 +646,7 @@ def _package_graph(
     sol_node_rows:   List[List[float]],
     sol_edge_rows:   List[List[float]],
     meta:            Dict[str, Any],
+    extra:           Optional[Dict[str, Any]] = None,
 ) -> GraphResult:
     """Convert Python lists into a PyG Data object or a plain dict."""
 
@@ -574,6 +657,16 @@ def _package_graph(
         y_t        = torch.tensor([y],             dtype=torch.float32)
         sol_node   = torch.tensor(sol_node_rows,   dtype=torch.float32)
         sol_edge   = torch.tensor(sol_edge_rows,   dtype=torch.float32)
+        kwargs: Dict[str, Any] = {}
+        if extra is not None:
+            if "node_type" in extra:
+                kwargs["node_type"] = torch.tensor(extra["node_type"], dtype=torch.long)
+            if "edge_type" in extra:
+                kwargs["edge_type"] = torch.tensor(extra["edge_type"], dtype=torch.long)
+            if "x_dyn" in extra:
+                kwargs["x_dyn"] = torch.tensor(extra["x_dyn"], dtype=torch.float32)
+            if "edge_attr_dyn" in extra:
+                kwargs["edge_attr_dyn"] = torch.tensor(extra["edge_attr_dyn"], dtype=torch.float32)
         return PyGData(
             x=x,
             edge_index=edge_index,
@@ -582,10 +675,11 @@ def _package_graph(
             sol_node=sol_node,
             sol_edge=sol_edge,
             meta=meta,
+            **kwargs,
         )
 
     # Fallback: plain dict (works without torch / PyG)
-    return {
+    out = {
         "x":          x_rows,           # list[list[float]]  shape (N, NODE_FEAT_DIM)
         "edge_index": edge_index_pair,  # list[list[int]]    shape (2, E)
         "edge_attr":  ea_rows,          # list[list[float]]  shape (E, EDGE_FEAT_DIM)
@@ -594,6 +688,9 @@ def _package_graph(
         "sol_edge":   sol_edge_rows,    # list[list[float]]  shape (E, SOL_EDGE_DIM)
         "meta":       meta,
     }
+    if extra:
+        out.update(extra)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -605,6 +702,8 @@ def build_graph_from_json(
     normalize_features: bool = False,
     include_solution:   bool = True,
     include_links:      bool = True,
+    normalization_mode: str = "dataset",
+    merge_solution:     bool = False,
 ) -> GraphResult:
     """
     Build a single graph from an OPFData JSON file.
@@ -621,6 +720,11 @@ def build_graph_from_json(
         Attach ground-truth solution tensors as ``sol_node`` / ``sol_edge``.
     include_links : bool
         Include generator / load / shunt link edges.
+    normalization_mode : str
+        Either ``"dataset"`` or ``"graph"``.
+    merge_solution : bool
+        If True and solutions are included, return additional merged dynamic
+        features ``x_dyn`` / ``edge_attr_dyn``.
 
     Returns
     -------
@@ -630,6 +734,8 @@ def build_graph_from_json(
         normalize_features=normalize_features,
         include_solution=include_solution,
         include_links=include_links,
+        normalization_mode=normalization_mode,
+        merge_solution=merge_solution,
     )
     return builder.build_graph_from_json(file_path)
 
@@ -641,6 +747,8 @@ def batch_process(
     normalize_features: bool = False,
     include_solution:   bool = True,
     include_links:      bool = True,
+    normalization_mode: str = "dataset",
+    merge_solution:     bool = False,
 ) -> List[GraphResult]:
     """
     Convert all JSON files in *folder_path* to graph objects.
@@ -661,6 +769,11 @@ def batch_process(
         Attach ground-truth solution tensors.
     include_links : bool
         Include link edges.
+    normalization_mode : str
+        Either ``"dataset"`` or ``"graph"``.
+    merge_solution : bool
+        If True and solutions are included, return additional merged dynamic
+        features ``x_dyn`` / ``edge_attr_dyn``.
 
     Returns
     -------
@@ -670,6 +783,8 @@ def batch_process(
         normalize_features=normalize_features,
         include_solution=include_solution,
         include_links=include_links,
+        normalization_mode=normalization_mode,
+        merge_solution=merge_solution,
     )
     return builder.batch_process(
         folder_path, recursive=recursive, glob_pattern=glob_pattern
