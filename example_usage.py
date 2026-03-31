@@ -109,6 +109,7 @@ print("\n--- Example 3: PowerGraphBuilder with normalisation + no links ---")
 
 builder = PowerGraphBuilder(
     normalize_features=True,
+    normalization_mode="graph",  # explicit per-graph normalization
     include_solution=True,
     include_links=False,   # only ac_line / transformer edges
 )
@@ -137,6 +138,7 @@ builder_raw.fit_normalizers(raw_graphs)
 
 # Step 3: re-process with the fitted normalisers applied
 builder_raw.normalize_features = True
+builder_raw.normalization_mode = "dataset"
 norm_graphs = builder_raw.batch_process(OPFDATA_DIR)
 
 print(f"  Fitted normalisers on {len(raw_graphs)} graphs")
@@ -153,9 +155,11 @@ print(f"""
   grid.nodes.gen   (N_g ×11)   →  x[N_bus:N_bus+N_g,             0:11] + one-hot[1]
   grid.nodes.load  (N_l ×2 )   →  x[N_bus+N_g:N_bus+N_g+N_l,    0:2]  + one-hot[2]
   grid.nodes.shunt (N_s ×2 )   →  x[N_bus+N_g+N_l:N_bus+N_g+N_l+N_s, 0:2] + one-hot[3]
-  grid.edges.ac_line (E_ac×9)  →  edge_attr[0:E_ac,0:9]  + one-hot[0]
-  grid.edges.transf. (E_tr×11) →  edge_attr[E_ac:, 0:11] + one-hot[1]
-  *_link edges                 →  edge_attr[..., 0:0]     + one-hot[2]
+  grid.edges.ac_line (E_ac×9)  →  edge_attr[...,0:9]   + one-hot[ac_line]
+  grid.edges.transf. (E_tr×11) →  edge_attr[...,0:11]  + one-hot[transformer]
+  generator_link               →  edge_attr[...,0:0]   + one-hot[generator_link]
+  load_link                    →  edge_attr[...,0:0]   + one-hot[load_link]
+  shunt_link                   →  edge_attr[...,0:0]   + one-hot[shunt_link]
   metadata.objective           →  y  (regression label)
   solution.nodes.bus           →  sol_node[0:N_bus]   (angle, vmag)
   solution.nodes.generator     →  sol_node[N_bus:N_g] (P, Q)
