@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+
+# Pipeline outputs
+data/processed/
+
+# Temporary workspace for parquet staging
+*_tmp_ndjson/
