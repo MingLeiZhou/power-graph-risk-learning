@@ -6,3 +6,4 @@ data/processed/
 
 # Temporary workspace for parquet staging
 *_tmp_ndjson/
+*.joblib

@@ -1,0 +1,57 @@
+filename,network,mat_type,relpath,size_mb,var_name,dtype,var_type,shape,n_dims,n_elements
+ieee118__ieee118__raw__Bf.mat.json,ieee118,Bf,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/Bf.mat,373.52715492248535,#refs#,,h5obj,,,
+ieee118__ieee118__raw__Bf.mat.json,ieee118,Bf,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/Bf.mat,373.52715492248535,B_f_tot,object,,"(1, 122500)",2.0,122500.0
+ieee118__ieee118__raw__Ef.mat.json,ieee118,Ef,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/Ef.mat,738.0305128097534,#refs#,,h5obj,,,
+ieee118__ieee118__raw__Ef.mat.json,ieee118,Ef,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/Ef.mat,738.0305128097534,E_f_post,object,,"(1, 122500)",2.0,122500.0
+ieee118__ieee118__raw__Ef_nc.mat.json,ieee118,Ef_nc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/Ef_nc.mat,738.0305128097534,#refs#,,h5obj,,,
+ieee118__ieee118__raw__Ef_nc.mat.json,ieee118,Ef_nc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/Ef_nc.mat,738.0305128097534,E_f_kenza,object,,"(1, 122500)",2.0,122500.0
+ieee118__ieee118__raw__blist.mat.json,ieee118,blist,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/blist.mat,0.00466156005859375,bList,float64,,"(2, 186)",2.0,372.0
+ieee118__ieee118__raw__exp.mat.json,ieee118,exp,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/exp.mat,48.331281661987305,#refs#,,h5obj,,,
+ieee118__ieee118__raw__exp.mat.json,ieee118,exp,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/exp.mat,48.331281661987305,explainations,object,,"(1, 122500)",2.0,122500.0
+ieee118__ieee118__raw__of_bi.mat.json,ieee118,of_bi,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/of_bi.mat,43.61102771759033,#refs#,,h5obj,,,
+ieee118__ieee118__raw__of_bi.mat.json,ieee118,of_bi,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/of_bi.mat,43.61102771759033,output_features,object,,"(1, 122500)",2.0,122500.0
+ieee118__ieee118__raw__of_mc.mat.json,ieee118,of_mc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/of_mc.mat,46.40453815460205,#refs#,,h5obj,,,
+ieee118__ieee118__raw__of_mc.mat.json,ieee118,of_mc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/of_mc.mat,46.40453815460205,category,object,,"(1, 122500)",2.0,122500.0
+ieee118__ieee118__raw__of_reg.mat.json,ieee118,of_reg,powergraph/dataset_cascades_extracted/dataset_cascades/ieee118/ieee118/raw/of_reg.mat,0.045159339904785156,dns_MW,float64,,"(1, 122500)",2.0,122500.0
+ieee24__ieee24__raw__Bf.mat.json,ieee24,Bf,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/Bf.mat,18.909719467163086,#refs#,,h5obj,,,
+ieee24__ieee24__raw__Bf.mat.json,ieee24,Bf,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/Bf.mat,18.909719467163086,B_f_tot,object,,"(1, 21500)",2.0,21500.0
+ieee24__ieee24__raw__Ef.mat.json,ieee24,Ef,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/Ef.mat,32.03229236602783,#refs#,,h5obj,,,
+ieee24__ieee24__raw__Ef.mat.json,ieee24,Ef,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/Ef.mat,32.03229236602783,E_f_post,object,,"(1, 21500)",2.0,21500.0
+ieee24__ieee24__raw__Ef_nc.mat.json,ieee24,Ef_nc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/Ef_nc.mat,32.03229236602783,#refs#,,h5obj,,,
+ieee24__ieee24__raw__Ef_nc.mat.json,ieee24,Ef_nc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/Ef_nc.mat,32.03229236602783,E_f_kenza,object,,"(1, 21500)",2.0,21500.0
+ieee24__ieee24__raw__blist.mat.json,ieee24,blist,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/blist.mat,0.00240325927734375,bList,float64,,"(2, 38)",2.0,76.0
+ieee24__ieee24__raw__exp.mat.json,ieee24,exp,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/exp.mat,7.942746162414551,#refs#,,h5obj,,,
+ieee24__ieee24__raw__exp.mat.json,ieee24,exp,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/exp.mat,7.942746162414551,explainations,object,,"(1, 21500)",2.0,21500.0
+ieee24__ieee24__raw__of_bi.mat.json,ieee24,of_bi,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/of_bi.mat,7.263134002685547,#refs#,,h5obj,,,
+ieee24__ieee24__raw__of_bi.mat.json,ieee24,of_bi,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/of_bi.mat,7.263134002685547,output_features,object,,"(1, 21500)",2.0,21500.0
+ieee24__ieee24__raw__of_mc.mat.json,ieee24,of_mc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/of_mc.mat,7.752763748168945,#refs#,,h5obj,,,
+ieee24__ieee24__raw__of_mc.mat.json,ieee24,of_mc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/of_mc.mat,7.752763748168945,category,object,,"(1, 21500)",2.0,21500.0
+ieee24__ieee24__raw__of_reg.mat.json,ieee24,of_reg,powergraph/dataset_cascades_extracted/dataset_cascades/ieee24/ieee24/raw/of_reg.mat,0.016187667846679688,dns_MW,float64,,"(1, 21500)",2.0,21500.0
+ieee39__ieee39__raw__Bf.mat.json,ieee39,Bf,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/Bf.mat,33.99801540374756,#refs#,,h5obj,,,
+ieee39__ieee39__raw__Bf.mat.json,ieee39,Bf,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/Bf.mat,33.99801540374756,B_f_tot,object,,"(1, 28000)",2.0,28000.0
+ieee39__ieee39__raw__Ef.mat.json,ieee39,Ef,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/Ef.mat,48.31239891052246,#refs#,,h5obj,,,
+ieee39__ieee39__raw__Ef.mat.json,ieee39,Ef,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/Ef.mat,48.31239891052246,E_f_post,object,,"(1, 28000)",2.0,28000.0
+ieee39__ieee39__raw__Ef_nc.mat.json,ieee39,Ef_nc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/Ef_nc.mat,48.31239891052246,#refs#,,h5obj,,,
+ieee39__ieee39__raw__Ef_nc.mat.json,ieee39,Ef_nc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/Ef_nc.mat,48.31239891052246,E_f_kenza,object,,"(1, 28000)",2.0,28000.0
+ieee39__ieee39__raw__blist.mat.json,ieee39,blist,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/blist.mat,0.00252532958984375,bList,float64,,"(2, 46)",2.0,92.0
+ieee39__ieee39__raw__exp.mat.json,ieee39,exp,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/exp.mat,10.213675498962402,#refs#,,h5obj,,,
+ieee39__ieee39__raw__exp.mat.json,ieee39,exp,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/exp.mat,10.213675498962402,explainations,object,,"(1, 28000)",2.0,28000.0
+ieee39__ieee39__raw__of_bi.mat.json,ieee39,of_bi,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/of_bi.mat,9.218173027038574,#refs#,,h5obj,,,
+ieee39__ieee39__raw__of_bi.mat.json,ieee39,of_bi,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/of_bi.mat,9.218173027038574,output_features,object,,"(1, 28000)",2.0,28000.0
+ieee39__ieee39__raw__of_mc.mat.json,ieee39,of_mc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/of_mc.mat,9.855572700500488,#refs#,,h5obj,,,
+ieee39__ieee39__raw__of_mc.mat.json,ieee39,of_mc,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/of_mc.mat,9.855572700500488,category,object,,"(1, 28000)",2.0,28000.0
+ieee39__ieee39__raw__of_reg.mat.json,ieee39,of_reg,powergraph/dataset_cascades_extracted/dataset_cascades/ieee39/ieee39/raw/of_reg.mat,0.014324188232421875,dns_MW,float64,,"(1, 28000)",2.0,28000.0
+uk__uk__raw__Bf.mat.json,uk,Bf,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/Bf.mat,64.61972332000732,#refs#,,h5obj,,,
+uk__uk__raw__Bf.mat.json,uk,Bf,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/Bf.mat,64.61972332000732,B_f_tot,object,,"(1, 64000)",2.0,64000.0
+uk__uk__raw__Ef.mat.json,uk,Ef,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/Ef.mat,215.49673557281494,#refs#,,h5obj,,,
+uk__uk__raw__Ef.mat.json,uk,Ef,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/Ef.mat,215.49673557281494,E_f_post,object,,"(1, 64000)",2.0,64000.0
+uk__uk__raw__Ef_nc.mat.json,uk,Ef_nc,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/Ef_nc.mat,215.49673557281494,#refs#,,h5obj,,,
+uk__uk__raw__Ef_nc.mat.json,uk,Ef_nc,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/Ef_nc.mat,215.49673557281494,E_f_kenza,object,,"(1, 64000)",2.0,64000.0
+uk__uk__raw__blist.mat.json,uk,blist,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/blist.mat,0.00333404541015625,bList,float64,,"(2, 99)",2.0,198.0
+uk__uk__raw__exp.mat.json,uk,exp,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/exp.mat,25.01051425933838,#refs#,,h5obj,,,
+uk__uk__raw__exp.mat.json,uk,exp,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/exp.mat,25.01051425933838,explainations,object,,"(1, 64000)",2.0,64000.0
+uk__uk__raw__of_bi.mat.json,uk,of_bi,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/of_bi.mat,22.620460510253906,#refs#,,h5obj,,,
+uk__uk__raw__of_bi.mat.json,uk,of_bi,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/of_bi.mat,22.620460510253906,output_features,object,,"(1, 64000)",2.0,64000.0
+uk__uk__raw__of_mc.mat.json,uk,of_mc,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/of_mc.mat,24.080299377441406,#refs#,,h5obj,,,
+uk__uk__raw__of_mc.mat.json,uk,of_mc,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/of_mc.mat,24.080299377441406,category,object,,"(1, 64000)",2.0,64000.0
+uk__uk__raw__of_reg.mat.json,uk,of_reg,powergraph/dataset_cascades_extracted/dataset_cascades/uk/uk/raw/of_reg.mat,0.014856338500976562,dns_MW,float64,,"(1, 64000)",2.0,64000.0

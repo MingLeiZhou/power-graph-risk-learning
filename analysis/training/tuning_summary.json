@@ -1,0 +1,81 @@
+{
+  "round1_test": {
+    "cls": {
+      "round": "round1_baseline",
+      "model": "rf",
+      "params": {
+        "max_depth": 20,
+        "min_samples_leaf": 3,
+        "n_estimators": 250
+      },
+      "auc": 0.9977387208173474,
+      "f1": 0.8888888888888888,
+      "acc": 0.9844583333333333
+    },
+    "reg": {
+      "round": "round1_baseline",
+      "model": "et",
+      "params": {
+        "max_depth": 20,
+        "min_samples_leaf": 1,
+        "n_estimators": 250
+      },
+      "mae": 0.0007408001553753604,
+      "rmse": 0.009651212445157969,
+      "r2": 0.8681792464333866
+    }
+  },
+  "round2_test": {
+    "cls": {
+      "round": "round2_netnorm",
+      "model": "rf",
+      "params": {
+        "max_depth": 20,
+        "min_samples_leaf": 3,
+        "n_estimators": 250
+      },
+      "auc": 0.9978442778660451,
+      "f1": 0.9077536009806926,
+      "acc": 0.9874583333333333
+    },
+    "reg": {
+      "round": "round2_netnorm",
+      "model": "et",
+      "params": {
+        "max_depth": 20,
+        "min_samples_leaf": 1,
+        "n_estimators": 250
+      },
+      "mae": 0.0010409051384251081,
+      "rmse": 0.011154155545460715,
+      "r2": 0.823926729226172
+    }
+  },
+  "selected_round": "round2_netnorm",
+  "selected_clf": {
+    "model": "rf",
+    "params": {
+      "max_depth": 20,
+      "min_samples_leaf": 3,
+      "n_estimators": 250
+    }
+  },
+  "selected_reg": {
+    "model": "et",
+    "params": {
+      "max_depth": 20,
+      "min_samples_leaf": 1,
+      "n_estimators": 250
+    }
+  },
+  "lono_cls_mean": {
+    "auc": 0.6544692632987762,
+    "f1": 0.022188743899875456,
+    "acc": 0.905718512695776
+  },
+  "lono_reg_mean": {
+    "mae": 0.01946681912889517,
+    "rmse": 0.038515185721409544,
+    "r2": -49.6339380917367
+  }
+}

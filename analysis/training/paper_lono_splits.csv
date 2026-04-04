@@ -1,0 +1,5 @@
+fold_test_network,train_networks
+ieee118,"ieee24, ieee39, uk"
+ieee24,"ieee118, ieee39, uk"
+ieee39,"ieee118, ieee24, uk"
+uk,"ieee118, ieee24, ieee39"

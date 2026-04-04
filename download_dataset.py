@@ -1,140 +1,113 @@
-from __future__ import annotations
+#!/usr/bin/env python3
+"""
+Complete Dataset Download & Organization Script
+
+Downloads and organizes OPFData, PGLib-OPF, and PowerGraph datasets.
+Standardized folder structure with no zip packaging.
+Uses built-in libraries only.
+
+Author: Auto-generated
+Date: 2026-04-03
+"""
 
 import json
 import shutil
 import tarfile
 import time
+import urllib.request
+import urllib.error
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from urllib.parse import quote
+from typing import Dict, List, Optional
 import xml.etree.ElementTree as ET
-
-import requests
 
 # =========================
 # Config
 # =========================
 
-WORKDIR = Path("power_demo_work")
-OUT_ZIP = Path("DEMO.zip")
+# 数据根目录
+DATA_ROOT = Path("data")
 
-# 是否清空工作目录
-CLEAN_WORKDIR = False
+# 子目录
+OPFDATA_DIR = DATA_ROOT / "opfdata"
+PGLIB_DIR = DATA_ROOT / "pglib"
+POWERGRAPH_DIR = DATA_ROOT / "powergraph"
+LOGS_DIR = DATA_ROOT / "logs"
 
 # 1) PGLib
 PGLIB_CASE = "pglib_opf_case118_ieee.m"
 PGLIB_RAW_BASE = "https://raw.githubusercontent.com/power-grid-lib/pglib-opf/master"
 
-# 2) OPFData public bucket
+# 2) OPFData - 下载完整数据集
 OPFDATA_BUCKET_BASE = "https://storage.googleapis.com/gridopt-dataset"
 
-# 自动发现时会尝试的前缀
-OPFDATA_PREFIX_HINTS = [
-    "",
-    "dataset_release_1/",
-    "case14",
-    "case118",
-    "14",
-    "118",
-    "ieee14",
-    "ieee118",
-]
-
-# 优先关键词
-OPFDATA_PREFERRED_KEYWORDS = [
-    "case14",
-    "14_ieee",
-    "ieee14",
-    "case118",
-    "118_ieee",
-    "ieee118",
-    "sample",
-    "train",
-    "valid",
-    "test",
-]
-
-# 允许的后缀
-OPFDATA_ALLOWED_EXTS = {
-    ".json",
-    ".jsonl",
-    ".csv",
-    ".parquet",
-    ".pt",
-    ".pkl",
-    ".pickle",
-    ".npz",
-    ".npy",
-    ".mat",
-    ".gz",
-    ".txt",
-    ".md",
-}
-
-OPFDATA_DEPRIORITIZE_NAMES = {"readme", "license"}
-
-# demo 下载限制
-OPFDATA_MAX_FILES = 1
-OPFDATA_MAX_BYTES_PER_FILE = 40 * 1024 * 1024  # 40MB
-OPFDATA_DISCOVERY_MAX_PAGES = 20
-OPFDATA_DISCOVERY_MAX_PREFIXES = 200
-
-# 最稳妥：直接手动指定对象
-OPFDATA_MANUAL_OBJECTS: List[str] = [
-    "dataset_release_1/pglib_opf_case14_ieee_0.tar.gz",
-]
-
-# 3) PowerGraph figshare
+# 3) PowerGraph - 完整下载
 POWERGRAPH_ARTICLE_ID = 22820534
-POWERGRAPH_KEYWORDS = ["ieee24", "ieee39", "ieee118", "uk", "metadata", "readme"]
-POWERGRAPH_MAX_FILES = 1
-POWERGRAPH_MAX_BYTES_PER_FILE = 200 * 1024 * 1024
-POWERGRAPH_AUTO_EXTRACT_ARCHIVE = True
+POWERGRAPH_MAX_BYTES_PER_FILE = 500 * 1024 * 1024  # 500MB
 
 # Network
-TIMEOUT = 60
-HEADERS = {"User-Agent": "power-demo-builder/3.0"}
+TIMEOUT = 120
 
 # =========================
 # Helpers
 # =========================
 
 def log(msg: str) -> None:
-    print(msg, flush=True)
+    """Log message with timestamp"""
+    ts = time.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{ts}] {msg}", flush=True)
 
 def safe_mkdir(p: Path) -> None:
-    p.mkdir(parents=True, exist_ok=True)
-
-def clean_dir(p: Path) -> None:
-    if p.exists():
-        shutil.rmtree(p)
     p.mkdir(parents=True, exist_ok=True)
 
 def ensure_dir(p: Path) -> None:
     p.mkdir(parents=True, exist_ok=True)
 
-def request_json(url: str) -> dict:
-    r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
-    r.raise_for_status()
-    return r.json()
-
-def download_file(url: str, dest: Path, max_bytes: Optional[int] = None) -> Path:
+def download_file(url: str, dest: Path, max_bytes: Optional[int] = None) -> bool:
+    """Download file with progress and size limit"""
     safe_mkdir(dest.parent)
-    with requests.get(url, headers=HEADERS, timeout=TIMEOUT, stream=True) as r:
-        r.raise_for_status()
-        total = 0
-        with open(dest, "wb") as f:
-            for chunk in r.iter_content(chunk_size=1024 * 1024):
-                if not chunk:
-                    continue
-                total += len(chunk)
-                if max_bytes is not None and total > max_bytes:
-                    raise RuntimeError(
-                        f"Aborted download because file exceeded max_bytes={max_bytes}: {url}"
-                    )
-                f.write(chunk)
-    return dest
+    
+    try:
+        headers = {'User-Agent': 'power-dataset-builder/4.0'}
+        req = urllib.request.Request(url, headers=headers)
+        
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
+            total = 0
+            content_length = int(response.headers.get('Content-Length', 0))
+            
+            with open(dest, "wb") as f:
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    
+                    total += len(chunk)
+                    
+                    if max_bytes is not None and total > max_bytes:
+                        dest.unlink()
+                        log(f"    ❌ File too large ({human_size(total)}), skipped")
+                        return False
+                    
+                    f.write(chunk)
+                    
+                    # Show progress
+                    if content_length > 0:
+                        pct = (total / content_length) * 100
+                        print(f"      └─ {pct:.1f}% ({human_size(total)}/{human_size(content_length)})", 
+                              end='\r', flush=True)
+        
+        print()  # Newline after progress
+        return True
+    except urllib.error.URLError as e:
+        log(f"    ❌ Download failed: {e}")
+        if dest.exists():
+            dest.unlink()
+        return False
+    except Exception as e:
+        log(f"    ❌ Error: {e}")
+        if dest.exists():
+            dest.unlink()
+        return False
 
 def human_size(n: int) -> str:
     units = ["B", "KB", "MB", "GB", "TB"]
@@ -143,500 +116,378 @@ def human_size(n: int) -> str:
     while x >= 1024 and i < len(units) - 1:
         x /= 1024
         i += 1
-    return f"{x:.2f} {units[i]}"
+    return f"{x:.2f}{units[i]}"
 
 def write_json(path: Path, obj: dict) -> None:
     safe_mkdir(path.parent)
     path.write_text(json.dumps(obj, indent=2, ensure_ascii=False), encoding="utf-8")
 
-def write_text(path: Path, text: str) -> None:
-    safe_mkdir(path.parent)
-    path.write_text(text, encoding="utf-8")
-
-def sanitize_relname(name: str) -> str:
-    return name.replace("/", "__")
+def sanitize_filename(name: str) -> str:
+    """Sanitize filename"""
+    return name.replace("/", "__").replace("\\", "__")
 
 def maybe_extract_archive(path: Path, dest_dir: Path) -> Optional[Path]:
+    """Extract archive if supported"""
     lower = path.name.lower()
 
-    # zip
-    if lower.endswith(".zip"):
-        extract_dir = dest_dir / f"{path.stem}_extracted"
-        ensure_dir(extract_dir)
-        with zipfile.ZipFile(path, "r") as zf:
-            zf.extractall(extract_dir)
-        return extract_dir
+    try:
+        if lower.endswith(".zip"):
+            extract_dir = dest_dir / f"{path.stem}_extracted"
+            ensure_dir(extract_dir)
+            log(f"    📦 Extracting {path.name}...")
+            with zipfile.ZipFile(path, "r") as zf:
+                zf.extractall(extract_dir)
+            return extract_dir
 
-    # tar.gz
-    if lower.endswith(".tar.gz"):
-        stem = path.name[:-7]
-        extract_dir = dest_dir / f"{stem}_extracted"
-        ensure_dir(extract_dir)
-        with tarfile.open(path, "r:gz") as tf:
-            tf.extractall(extract_dir)
-        return extract_dir
+        if lower.endswith(".tar.gz"):
+            stem = path.name[:-7]
+            extract_dir = dest_dir / f"{stem}_extracted"
+            ensure_dir(extract_dir)
+            log(f"    📦 Extracting {path.name}...")
+            with tarfile.open(path, "r:gz") as tf:
+                tf.extractall(extract_dir)
+            return extract_dir
 
-    # tgz
-    if lower.endswith(".tgz"):
-        stem = path.name[:-4]
-        extract_dir = dest_dir / f"{stem}_extracted"
-        ensure_dir(extract_dir)
-        with tarfile.open(path, "r:gz") as tf:
-            tf.extractall(extract_dir)
-        return extract_dir
+        if lower.endswith(".tgz"):
+            stem = path.name[:-4]
+            extract_dir = dest_dir / f"{stem}_extracted"
+            ensure_dir(extract_dir)
+            log(f"    📦 Extracting {path.name}...")
+            with tarfile.open(path, "r:gz") as tf:
+                tf.extractall(extract_dir)
+            return extract_dir
+    except Exception as e:
+        log(f"    ⚠️  Extract failed: {e}")
 
     return None
 
 # =========================
-# PGLib
+# PGLib Download
 # =========================
 
-def download_pglib_case(root: Path, case_name: str) -> Dict:
-    out_dir = root / "pglib"
-    safe_mkdir(out_dir)
-
-    url = f"{PGLIB_RAW_BASE}/{quote(case_name)}"
-    dest = out_dir / case_name
+def download_pglib_case(case_name: str) -> Optional[Dict]:
+    """Download PGLib case"""
+    log(f"📥 Downloading PGLib: {case_name}")
+    
+    url = f"{PGLIB_RAW_BASE}/{case_name}"
+    dest = PGLIB_DIR / case_name
 
     if dest.exists():
-        log(f"[PGLib] exists, skip: {case_name}")
-    else:
-        log(f"[PGLib] downloading {case_name}")
-        download_file(url, dest)
-
-    return {
-        "source": "PGLib-OPF",
-        "url": url,
-        "saved_as": str(dest.relative_to(root)),
-        "bytes": dest.stat().st_size,
-    }
-
-# =========================
-# OPFData
-# =========================
-
-def parse_gcs_list_xml(xml_text: str) -> Tuple[List[Dict], List[str], Optional[str]]:
-    root = ET.fromstring(xml_text)
-
-    items = []
-    prefixes = []
-
-    for contents in root.findall(".//{*}Contents"):
-        key_el = contents.find("{*}Key")
-        size_el = contents.find("{*}Size")
-        if key_el is None:
-            continue
-        items.append({
-            "name": key_el.text or "",
-            "size": int(size_el.text) if size_el is not None and size_el.text else None,
-        })
-
-    for cp in root.findall(".//{*}CommonPrefixes"):
-        p = cp.find("{*}Prefix")
-        if p is not None and p.text:
-            prefixes.append(p.text)
-
-    next_marker_el = root.find(".//{*}NextMarker")
-    next_marker = next_marker_el.text if next_marker_el is not None and next_marker_el.text else None
-
-    return items, prefixes, next_marker
-
-def list_gcs_once(prefix: str = "", delimiter: Optional[str] = None, marker: Optional[str] = None, max_keys: int = 1000) -> Tuple[List[Dict], List[str], Optional[str]]:
-    params = {"prefix": prefix, "max-keys": str(max_keys)}
-    if delimiter is not None:
-        params["delimiter"] = delimiter
-    if marker:
-        params["marker"] = marker
-
-    r = requests.get(OPFDATA_BUCKET_BASE, params=params, headers=HEADERS, timeout=TIMEOUT)
-    r.raise_for_status()
-    return parse_gcs_list_xml(r.text)
-
-def list_gcs_all_objects_for_prefix(prefix: str, max_pages: int = OPFDATA_DISCOVERY_MAX_PAGES) -> List[Dict]:
-    all_items: List[Dict] = []
-    marker = None
-    pages = 0
-
-    while pages < max_pages:
-        items, _, next_marker = list_gcs_once(prefix=prefix, delimiter=None, marker=marker, max_keys=1000)
-        all_items.extend(items)
-        pages += 1
-        if not next_marker:
-            break
-        marker = next_marker
-
-    return all_items
-
-def discover_gcs_prefixes(seed_prefixes: List[str]) -> List[str]:
-    seen = set()
-    queue = list(seed_prefixes)
-    discovered = []
-
-    while queue and len(seen) < OPFDATA_DISCOVERY_MAX_PREFIXES:
-        cur = queue.pop(0)
-        if cur in seen:
-            continue
-        seen.add(cur)
-        discovered.append(cur)
-
-        try:
-            _, child_prefixes, _ = list_gcs_once(prefix=cur, delimiter="/", marker=None, max_keys=1000)
-            for cp in child_prefixes:
-                if cp not in seen:
-                    queue.append(cp)
-        except Exception as e:
-            log(f"[OPFData] prefix discovery failed for {cur!r}: {e}")
-
-    return discovered
-
-def choose_opfdata_objects() -> List[Dict]:
-    # 手动指定优先
-    if OPFDATA_MANUAL_OBJECTS:
-        selected = [{"name": x, "size": None, "manual": True} for x in OPFDATA_MANUAL_OBJECTS]
-        log("[OPFData] using manual objects:")
-        for x in selected:
-            log(f"  - {x['name']}")
-        return selected
-
-    seed_prefixes = list(dict.fromkeys(OPFDATA_PREFIX_HINTS))
-    all_prefixes = discover_gcs_prefixes(seed_prefixes)
-
-    log(f"[OPFData] discovered {len(all_prefixes)} prefixes")
-
-    candidates: List[Dict] = []
-    for p in all_prefixes:
-        try:
-            objs = list_gcs_all_objects_for_prefix(p)
-            candidates.extend(objs)
-        except Exception as e:
-            log(f"[OPFData] object listing failed for prefix={p!r}: {e}")
-
-    if not candidates:
-        try:
-            candidates.extend(list_gcs_all_objects_for_prefix(""))
-        except Exception as e:
-            raise RuntimeError(f"Could not list OPFData bucket recursively: {e}")
-
-    uniq = {}
-    for obj in candidates:
-        name = obj["name"]
-        if name and name not in uniq:
-            uniq[name] = obj
-
-    objs = list(uniq.values())
-    log(f"[OPFData] total unique discovered objects: {len(objs)}")
-
-    log("[OPFData] first 80 discovered object names:")
-    for x in objs[:80]:
-        log(f"  - {x['name']} | size={x.get('size')}")
-
-    def object_score(obj: Dict) -> Tuple[int, int, str]:
-        name = obj["name"]
-        lower = name.lower()
-        size = obj.get("size")
-        size_rank = size if size is not None else 10**12
-
-        score = 0
-
-        for kw in OPFDATA_PREFERRED_KEYWORDS:
-            if kw in lower:
-                score -= 20
-
-        suffix = Path(lower).suffix
-        if suffix in {".json", ".jsonl", ".csv", ".parquet", ".pt", ".pkl", ".pickle", ".npz", ".npy", ".mat", ".gz"}:
-            score -= 80
-        elif suffix in {".txt", ".md"}:
-            score += 30
-
-        if "readme" in lower or "license" in lower:
-            score += 200
-
-        if size is not None:
-            if size <= OPFDATA_MAX_BYTES_PER_FILE:
-                score -= 30
-            else:
-                score += 300
-
-        return (score, size_rank, lower)
-
-    filtered = []
-    for obj in objs:
-        name = obj["name"]
-        lower = name.lower()
-        size = obj.get("size")
-
-        if not name or name.endswith("/"):
-            continue
-        if size is not None and size > OPFDATA_MAX_BYTES_PER_FILE:
-            continue
-        if "readme" in lower or "license" in lower:
-            continue
-
-        filtered.append(obj)
-
-    filtered.sort(key=object_score)
-
-    if not filtered:
-        log("[OPFData] strict selection got 0 files, fallback to loose selection")
-        for obj in objs:
-            name = obj["name"]
-            size = obj.get("size")
-            if not name or name.endswith("/"):
-                continue
-            if size is not None and size > OPFDATA_MAX_BYTES_PER_FILE:
-                continue
-            filtered.append(obj)
-        filtered.sort(key=object_score)
-
-    selected = filtered[:OPFDATA_MAX_FILES]
-
-    log("[OPFData] selected objects:")
-    for x in selected:
-        log(f"  - {x['name']} ({human_size(x['size']) if x.get('size') else 'unknown'})")
-
-    return selected
-
-def download_opfdata_objects(root: Path) -> List[Dict]:
-    out_dir = root / "opfdata"
-    safe_mkdir(out_dir)
-
-    selected = choose_opfdata_objects()
-    if not selected:
-        raise RuntimeError(
-            "No suitable OPFData files were found. You may need to adjust OPFDATA_PREFIX_HINTS "
-            "or set OPFDATA_MANUAL_OBJECTS explicitly."
-        )
-
-    results = []
-    for obj in selected:
-        key = obj["name"]
-        url = f"{OPFDATA_BUCKET_BASE}/{quote(key)}"
-        fname = sanitize_relname(key)
-        dest = out_dir / fname
-
-        if dest.exists():
-            log(f"[OPFData] exists, skip: {key}")
-        else:
-            log(f"[OPFData] downloading {key}")
-            try:
-                download_file(url, dest, max_bytes=OPFDATA_MAX_BYTES_PER_FILE)
-            except Exception as e:
-                log(f"[OPFData] skipped {key}: {e}")
-                continue
-
-        item = {
-            "source": "OPFData",
-            "object_name": key,
+        log(f"  ✅ Already exists: {case_name}")
+        return {
+            "source": "PGLib-OPF",
+            "name": case_name,
             "url": url,
-            "saved_as": str(dest.relative_to(root)),
-            "bytes": dest.stat().st_size if dest.exists() else None,
+            "path": str(dest.relative_to(DATA_ROOT)),
+            "size": dest.stat().st_size,
         }
 
-        try:
-            extract_dir = maybe_extract_archive(dest, out_dir)
+    if download_file(url, dest):
+        log(f"  ✅ Downloaded: {case_name} ({human_size(dest.stat().st_size)})")
+        return {
+            "source": "PGLib-OPF",
+            "name": case_name,
+            "url": url,
+            "path": str(dest.relative_to(DATA_ROOT)),
+            "size": dest.stat().st_size,
+        }
+    
+    return None
+
+# =========================
+# OPFData - Manual Selection
+# =========================
+
+def download_opfdata_manual() -> List[Dict]:
+    """Download selected OPFData files (with manual configuration)"""
+    log("📥 Downloading OPFData (Selected Files)")
+    
+    # 手动指定要下载的关键文件
+    manual_files = [
+        "dataset_release_1/pglib_opf_case14_ieee_0.tar.gz",
+        "dataset_release_1/pglib_opf_case30_ieee_0.tar.gz",
+        "dataset_release_1/pglib_opf_case57_ieee_0.tar.gz",
+        "dataset_release_1/pglib_opf_case118_ieee_0.tar.gz",
+    ]
+
+    results = []
+    downloaded = 0
+    skipped = 0
+
+    for i, key in enumerate(manual_files, 1):
+        url = f"{OPFDATA_BUCKET_BASE}/{key}"
+        fname = sanitize_filename(key)
+        dest = OPFDATA_DIR / fname
+
+        log(f"  📥 [{i}/{len(manual_files)}] {key}")
+
+        if dest.exists():
+            log(f"    ✅ Already exists ({human_size(dest.stat().st_size)})")
+            results.append({
+                "source": "OPFData",
+                "name": key,
+                "url": url,
+                "path": str(dest.relative_to(DATA_ROOT)),
+                "size": dest.stat().st_size,
+            })
+            downloaded += 1
+            continue
+
+        if download_file(url, dest):
+            # 尝试解压
+            extract_dir = maybe_extract_archive(dest, OPFDATA_DIR)
+            
+            result = {
+                "source": "OPFData",
+                "name": key,
+                "url": url,
+                "path": str(dest.relative_to(DATA_ROOT)),
+                "size": dest.stat().st_size if dest.exists() else 0,
+            }
             if extract_dir:
-                item["extracted_to"] = str(extract_dir.relative_to(root))
-        except Exception as e:
-            log(f"[OPFData] extract failed for {key}: {e}")
+                result["extracted"] = str(extract_dir.relative_to(DATA_ROOT))
+            
+            results.append(result)
+            downloaded += 1
+        else:
+            skipped += 1
 
-        results.append(item)
-
-    if not results:
-        raise RuntimeError("All selected OPFData files failed to download.")
+    log(f"  📊 OPFData Summary: {downloaded} downloaded, {skipped} skipped")
     return results
 
 # =========================
-# PowerGraph
+# PowerGraph Download
 # =========================
 
 def get_figshare_article_files(article_id: int) -> List[Dict]:
-    data = request_json(f"https://api.figshare.com/v2/articles/{article_id}")
-    return data.get("files", [])
+    """Get all files from Figshare article"""
+    log(f"📥 Querying Figshare article {article_id}...")
+    
+    try:
+        url = f"https://api.figshare.com/v2/articles/{article_id}"
+        headers = {'User-Agent': 'power-dataset-builder/4.0'}
+        req = urllib.request.Request(url, headers=headers)
+        
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        files = data.get("files", [])
+        log(f"  📊 Found {len(files)} files")
+        return files
+    except Exception as e:
+        log(f"  ❌ Failed to query Figshare: {e}")
+        return []
 
-def choose_powergraph_files(files: List[Dict]) -> List[Dict]:
-    ranked = []
-
-    for f in files:
-        name = (f.get("name") or "").lower()
-        size = int(f.get("size") or 0)
-        if size <= 0:
-            continue
-        if size > POWERGRAPH_MAX_BYTES_PER_FILE:
-            continue
-
-        score = 100
-        for kw in POWERGRAPH_KEYWORDS:
-            if kw in name:
-                score -= 30
-
-        if "readme" in name or "meta" in name:
-            score -= 20
-
-        if name.endswith((".csv", ".json", ".txt", ".md", ".pkl", ".pt", ".zip", ".7z", ".mat")):
-            score -= 5
-
-        ranked.append((score, size, name, f))
-
-    ranked.sort(key=lambda x: (x[0], x[1], x[2]))
-    return [x[3] for x in ranked[:POWERGRAPH_MAX_FILES]]
-
-def download_powergraph_files(root: Path) -> List[Dict]:
-    out_dir = root / "powergraph"
-    safe_mkdir(out_dir)
-
+def download_powergraph_complete() -> List[Dict]:
+    """Download PowerGraph dataset"""
+    log("📥 Downloading PowerGraph")
+    
     files = get_figshare_article_files(POWERGRAPH_ARTICLE_ID)
     if not files:
-        raise RuntimeError("No files found in Figshare article response.")
-
-    selected = choose_powergraph_files(files)
-    if not selected:
-        raise RuntimeError(
-            "No suitable PowerGraph files selected. You may need to relax "
-            "POWERGRAPH_MAX_BYTES_PER_FILE or change POWERGRAPH_KEYWORDS."
-        )
+        return []
 
     results = []
-    for f in selected:
+    downloaded = 0
+    skipped = 0
+
+    for i, f in enumerate(files, 1):
         name = f.get("name") or f"file_{f.get('id', 'unknown')}"
+        size = int(f.get("size") or 0)
         download_url = f.get("download_url")
+
         if not download_url:
+            log(f"  ⏭️  [{i}/{len(files)}] No download URL: {name}")
+            skipped += 1
             continue
 
-        dest = out_dir / sanitize_relname(name)
+        # 文件大小过滤
+        if size > POWERGRAPH_MAX_BYTES_PER_FILE:
+            log(f"  ⏭️  [{i}/{len(files)}] Too large: {name} ({human_size(size)})")
+            skipped += 1
+            continue
+
+        dest = POWERGRAPH_DIR / sanitize_filename(name)
+
+        log(f"  📥 [{i}/{len(files)}] {name} ({human_size(size)})")
 
         if dest.exists():
-            log(f"[PowerGraph] exists, skip: {name}")
+            log(f"    ✅ Already exists")
+            results.append({
+                "source": "PowerGraph",
+                "name": name,
+                "file_id": f.get("id"),
+                "url": download_url,
+                "path": str(dest.relative_to(DATA_ROOT)),
+                "size": dest.stat().st_size,
+            })
+            downloaded += 1
+            continue
+
+        if download_file(download_url, dest, max_bytes=POWERGRAPH_MAX_BYTES_PER_FILE):
+            # 尝试解压
+            extract_dir = maybe_extract_archive(dest, POWERGRAPH_DIR)
+            
+            result = {
+                "source": "PowerGraph",
+                "name": name,
+                "file_id": f.get("id"),
+                "url": download_url,
+                "path": str(dest.relative_to(DATA_ROOT)),
+                "size": dest.stat().st_size if dest.exists() else 0,
+            }
+            if extract_dir:
+                result["extracted"] = str(extract_dir.relative_to(DATA_ROOT))
+            
+            results.append(result)
+            downloaded += 1
         else:
-            log(f"[PowerGraph] downloading {name}")
-            try:
-                download_file(download_url, dest, max_bytes=POWERGRAPH_MAX_BYTES_PER_FILE)
-            except Exception as e:
-                log(f"[PowerGraph] skipped {name}: {e}")
-                continue
+            skipped += 1
 
-        item = {
-            "source": "PowerGraph",
-            "file_id": f.get("id"),
-            "name": name,
-            "url": download_url,
-            "saved_as": str(dest.relative_to(root)),
-            "bytes": dest.stat().st_size if dest.exists() else None,
-        }
-
-        if POWERGRAPH_AUTO_EXTRACT_ARCHIVE:
-            try:
-                extract_dir = maybe_extract_archive(dest, out_dir)
-                if extract_dir:
-                    item["extracted_to"] = str(extract_dir.relative_to(root))
-            except Exception as e:
-                log(f"[PowerGraph] extract failed for {name}: {e}")
-
-        results.append(item)
-
-    if not results:
-        raise RuntimeError("All selected PowerGraph files failed to download.")
+    log(f"  📊 PowerGraph Summary: {downloaded} downloaded, {skipped} skipped")
     return results
 
 # =========================
-# Demo metadata / zip
+# Manifest & Summary
 # =========================
 
-def build_manifest(root: Path, items: List[Dict]) -> Dict:
+def create_manifest(items: List[Dict]) -> Dict:
+    """Create manifest of downloaded data"""
     manifest = {
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "created_at_unix": int(time.time()),
-        "note": (
-            "This is a small demo package assembled from public sources. "
-            "It is intended for exploration / Kaggle demo, not full training."
-        ),
-        "files": items,
+        "description": "Complete power grid dataset for self-supervised cascading failure learning",
+        "datasets": {
+            "pglib": [],
+            "opfdata": [],
+            "powergraph": [],
+        },
         "summary": {
-            "total_files": len(items),
-            "total_bytes": sum(
-                int(x.get("bytes", 0) or 0)
-                for x in items
-                if x.get("bytes") is not None
-            ),
+            "total_files": 0,
+            "total_bytes": 0,
+            "by_source": {},
         },
     }
-    write_json(root / "manifest.json", manifest)
+
+    for item in items:
+        source = item["source"].lower()
+        
+        # 分类统计
+        if source == "pglib-opf":
+            manifest["datasets"]["pglib"].append(item)
+        elif source == "opfdata":
+            manifest["datasets"]["opfdata"].append(item)
+        elif source == "powergraph":
+            manifest["datasets"]["powergraph"].append(item)
+
+        # 总体统计
+        manifest["summary"]["total_files"] += 1
+        manifest["summary"]["total_bytes"] += item.get("size", 0)
+        
+        if source not in manifest["summary"]["by_source"]:
+            manifest["summary"]["by_source"][source] = {
+                "count": 0,
+                "bytes": 0,
+            }
+        manifest["summary"]["by_source"][source]["count"] += 1
+        manifest["summary"]["by_source"][source]["bytes"] += item.get("size", 0)
+
     return manifest
 
-def build_readme(root: Path, manifest: Dict) -> None:
-    lines = []
-    lines.append("# DEMO package")
-    lines.append("")
-    lines.append("This package was built automatically from public data sources:")
-    lines.append("- PGLib-OPF: grid case template")
-    lines.append("- OPFData: small sample of public objects from the public GCS bucket")
-    lines.append("- PowerGraph: small sample of public Figshare files")
-    lines.append("")
-    lines.append("## Included files")
-    for f in manifest["files"]:
-        extra = ""
-        if f.get("extracted_to"):
-            extra = f" -> extracted to `{f['extracted_to']}`"
-        lines.append(
-            f"- {f['source']}: `{f['saved_as']}` ({human_size(int(f.get('bytes', 0) or 0))}){extra}"
-        )
-    lines.append("")
-    lines.append("## Next step suggestion")
-    lines.append(
-        "Use the PGLib case as topology template, parse the OPFData files into node/edge features, "
-        "and use PowerGraph as downstream benchmark/demo."
-    )
-    write_text(root / "README.md", "\n".join(lines))
+def save_manifest(manifest: Dict) -> None:
+    """Save manifest to file"""
+    log("📝 Saving manifest...")
+    write_json(DATA_ROOT / "MANIFEST.json", manifest)
 
-def zip_dir(src_dir: Path, out_zip: Path) -> None:
-    if out_zip.exists():
-        out_zip.unlink()
-    with zipfile.ZipFile(out_zip, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for p in src_dir.rglob("*"):
-            if p.is_file():
-                zf.write(p, arcname=str(p.relative_to(src_dir)))
+def print_summary(manifest: Dict) -> None:
+    """Print download summary"""
+    log("")
+    log("=" * 70)
+    log("📊 DOWNLOAD SUMMARY")
+    log("=" * 70)
+    
+    summary = manifest["summary"]
+    log(f"Total files downloaded: {summary['total_files']}")
+    log(f"Total size: {human_size(summary['total_bytes'])}")
+    log("")
+    log("By source:")
+    for source, stats in summary["by_source"].items():
+        log(f"  • {source}: {stats['count']} files, {human_size(stats['bytes'])}")
+    
+    log("")
+    log("Folder structure:")
+    log(f"  {DATA_ROOT}/")
+    log(f"  ├── pglib/          ({len(manifest['datasets']['pglib'])} files)")
+    log(f"  ├── opfdata/        ({len(manifest['datasets']['opfdata'])} files)")
+    log(f"  ├── powergraph/     ({len(manifest['datasets']['powergraph'])} files)")
+    log(f"  └── MANIFEST.json   (metadata)")
+    log("=" * 70)
 
 # =========================
 # Main
 # =========================
 
 def main() -> int:
-    if CLEAN_WORKDIR:
-        clean_dir(WORKDIR)
-    else:
-        ensure_dir(WORKDIR)
+    """Main download script"""
+    ensure_dir(DATA_ROOT)
+    ensure_dir(LOGS_DIR)
+
+    log("🚀 Starting dataset download...")
+    log(f"   Target directory: {DATA_ROOT.resolve()}")
+    log("")
 
     all_items: List[Dict] = []
 
+    # Download PGLib
     try:
-        item = download_pglib_case(WORKDIR, PGLIB_CASE)
-        all_items.append(item)
+        item = download_pglib_case(PGLIB_CASE)
+        if item:
+            all_items.append(item)
     except Exception as e:
-        log(f"[ERROR] PGLib download failed: {e}")
-
-    try:
-        items = download_opfdata_objects(WORKDIR)
-        all_items.extend(items)
-    except Exception as e:
-        log(f"[ERROR] OPFData partial download failed: {e}")
-
-    try:
-        items = download_powergraph_files(WORKDIR)
-        all_items.extend(items)
-    except Exception as e:
-        log(f"[ERROR] PowerGraph partial download failed: {e}")
-
-    if not all_items:
-        log("[FATAL] Nothing was downloaded.")
-        return 1
-
-    manifest = build_manifest(WORKDIR, all_items)
-    build_readme(WORKDIR, manifest)
-    zip_dir(WORKDIR, OUT_ZIP)
+        log(f"❌ PGLib download failed: {e}")
 
     log("")
-    log(f"Done. Created: {OUT_ZIP.resolve()}")
-    log(f"Total files: {manifest['summary']['total_files']}")
-    log(f"Total size : {human_size(manifest['summary']['total_bytes'])}")
+
+    # Download OPFData
+    try:
+        items = download_opfdata_manual()
+        all_items.extend(items)
+    except Exception as e:
+        log(f"❌ OPFData download failed: {e}")
+
+    log("")
+
+    # Download PowerGraph
+    try:
+        items = download_powergraph_complete()
+        all_items.extend(items)
+    except Exception as e:
+        log(f"❌ PowerGraph download failed: {e}")
+
+    log("")
+
+    if not all_items:
+        log("❌ Nothing was downloaded!")
+        return 1
+
+    # Create and save manifest
+    manifest = create_manifest(all_items)
+    save_manifest(manifest)
+    print_summary(manifest)
+
+    log("")
+    log("✅ Download complete!")
     return 0
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        exit_code = main()
+    except KeyboardInterrupt:
+        log("⚠️  Interrupted by user")
+        exit_code = 1
+    except Exception as e:
+        log(f"❌ Fatal error: {e}")
+        import traceback
+        traceback.print_exc()
+        exit_code = 1
+    
+    exit(exit_code)
