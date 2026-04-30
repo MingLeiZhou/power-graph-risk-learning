@@ -1,0 +1,139 @@
+{
+  "data_source_note": "RF/XGB use downstream_v2_informative; GCN uses OPF JSON graphs. Not directly comparable unless samples/labels/networks are aligned.",
+  "feature_columns": [
+    "ef_r0_mean",
+    "ef_r0_std",
+    "ef_r0_min",
+    "ef_r0_max",
+    "ef_r1_mean",
+    "ef_r1_std",
+    "ef_r1_min",
+    "ef_r1_max",
+    "ef_r2_mean",
+    "ef_r2_std",
+    "ef_r2_min",
+    "ef_r2_max",
+    "ef_r3_mean",
+    "ef_r3_std",
+    "ef_r3_min",
+    "ef_r3_max",
+    "ef_global_mean",
+    "ef_global_std",
+    "efnc_r0_mean",
+    "efnc_r0_std",
+    "efnc_r0_min",
+    "efnc_r0_max",
+    "efnc_r1_mean",
+    "efnc_r1_std",
+    "efnc_r1_min",
+    "efnc_r1_max",
+    "efnc_r2_mean",
+    "efnc_r2_std",
+    "efnc_r2_min",
+    "efnc_r2_max",
+    "efnc_r3_mean",
+    "efnc_r3_std",
+    "efnc_r3_min",
+    "efnc_r3_max",
+    "efnc_global_mean",
+    "efnc_global_std",
+    "ef_r0_mean_tshift",
+    "ef_r1_mean_tshift",
+    "ef_r2_mean_tshift",
+    "ef_r3_mean_tshift",
+    "ef_global_mean_tshift",
+    "efnc_r0_mean_tshift",
+    "efnc_r1_mean_tshift",
+    "efnc_r2_mean_tshift",
+    "efnc_r3_mean_tshift",
+    "efnc_global_mean_tshift",
+    "n_samples",
+    "pos_rate",
+    "yreg_mean",
+    "yreg_std"
+  ],
+  "label_columns": {
+    "rf": [
+      "y_cls_v2",
+      "y_reg"
+    ],
+    "xgb": [
+      "y_cls_v2",
+      "y_reg"
+    ],
+    "gcn": [
+      "objective (g.y)",
+      "derived y_cls (objective quantiles)",
+      "y_reg=objective"
+    ]
+  },
+  "networks": {
+    "tabular": {
+      "networks": [
+        "ieee118",
+        "ieee24",
+        "ieee39",
+        "uk"
+      ],
+      "counts": {
+        "ieee118": 166008,
+        "ieee24": 27802,
+        "ieee39": 37584,
+        "uk": 87206
+      }
+    },
+    "gcn": {
+      "networks": [],
+      "counts": {}
+    }
+  },
+  "sample_counts": {
+    "tabular": {
+      "ieee118": 166008,
+      "ieee24": 27802,
+      "ieee39": 37584,
+      "uk": 87206
+    },
+    "gcn": {}
+  },
+  "threshold_method": "sweep",
+  "threshold_grid": [
+    0.12,
+    0.16,
+    0.2,
+    0.25
+  ],
+  "seeds": [
+    42
+  ],
+  "package_availability": {
+    "xgboost": true,
+    "torch": true,
+    "torch_geometric": true
+  },
+  "validation": {
+    "tabular": {
+      "networks": [
+        "ieee118",
+        "ieee24",
+        "ieee39",
+        "uk"
+      ],
+      "counts": {
+        "ieee118": 166008,
+        "ieee24": 27802,
+        "ieee39": 37584,
+        "uk": 87206
+      }
+    },
+    "gcn": {
+      "networks": [],
+      "counts": {}
+    },
+    "label_source": {
+      "rf": "downstream_v2_informative: y_cls_v2 / y_reg (dns_mw)",
+      "xgb": "downstream_v2_informative: y_cls_v2 / y_reg (dns_mw)",
+      "gcn": "OPF JSON graphs: y=objective, y_cls derived from objective quantiles"
+    }
+  }
+}

@@ -5,17 +5,26 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="de81ca00-d4ca-4970-a126-8d5767a5caa5" name="Changes" comment="再来一个prompt &#10;1.新开一个脚本处理opfdata里所有的json文件 &#10;2.">
-      <change beforePath="$PROJECT_DIR$/scripts/build_augmented_dataset.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/build_dataset_v2_informative.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/build_downstream_dataset.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/export_v2_lono_scores.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/final_v2_threshold_sweep_fast.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/generate_paper_assets.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/ingest_to_duckdb.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/process_all_powergraph_mat.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/run_analysis.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/train_compare_v2_informative.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/validate_data.py" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/copilot.data.migration.ask2agent.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/analysis/training/generate_v2_models_round_report.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/analysis/training/v2_models_lono_cls.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/analysis/training/v2_models_lono_reg.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/analysis/training/v2_models_metadata.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/analysis/training/v2_models_round.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/analysis/training/v2_models_round_README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/analysis/training/v2_models_rounds_README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/analysis/training/v2_models_rounds_report.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/analysis/training/v2_models_summary.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scripts/core/train_compare_v2_models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/power-graph-risk-learning.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/power-graph-risk-learning.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/documents/PhD_Thesis_Project_PDEIS.md" beforeDir="false" afterPath="$PROJECT_DIR$/documents/PhD_Thesis_Project_PDEIS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/data/build_downstream_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/data/build_downstream_dataset.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,16 +37,22 @@
     </persistenceIdMap>
   </component>
   <component name="CopilotUserSelectedChatMode">
-    <option name="chatModeId" value="Ask" />
+    <option name="chatModeId" value="Agent" />
+  </component>
+  <component name="CopilotUserSelectedModel">
+    <selectedModels>
+      <entry key="chat-panel" value="Auto" />
+      <entry key="agent-panel" value="Auto" />
+    </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="66037" />
+    <option name="cachedIndexableFilesCount" value="60289" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Python Script" />
         <option value="Jupyter Notebook" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -70,6 +85,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "ai.playground.ignore.import.keys.banner.in.settings": "true",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "git-widget-placeholder": "main",
@@ -80,11 +96,18 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "settings.editor.selected.configurable": "com.github.copilot.settings.customization.CustomizationConfigurable",
     "to.speed.mode.migration.done": "true",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecapSpentCounter">
+    <option name="endsOfQuotaMs" value="1779118857921" />
+    <option name="spentUsd" value="0.1713088" />
+  </component>
+  <component name="RecapUselessUpdatesCounter">
+    <option name="suspendCountdown" value="3" />
+  </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/documents" />
@@ -221,7 +244,9 @@
       <workItem from="1774912759178" duration="9415000" />
       <workItem from="1775246665069" duration="3908000" />
       <workItem from="1775250587526" duration="198000" />
-      <workItem from="1775250788888" duration="12523000" />
+      <workItem from="1775250788888" duration="17620000" />
+      <workItem from="1775404435589" duration="3716000" />
+      <workItem from="1777500096508" duration="9925000" />
     </task>
     <task id="LOCAL-00001" summary="init Data">
       <option name="closed" value="true" />
@@ -261,6 +286,17 @@
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="init Data" />
     <MESSAGE value="test data" />
@@ -268,7 +304,7 @@
     <option name="LAST_COMMIT_MESSAGE" value="Graph Schema Validation Report for OPFData" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/power_graph_risk_learning$test.coverage" NAME="test Coverage Results" MODIFIED="1774913998401" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/power_graph_risk_learning$test.coverage" NAME="test Coverage Results" MODIFIED="1775390273166" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/power_graph_risk_learning$power_graph_builder.coverage" NAME="power_graph_builder Coverage Results" MODIFIED="1774913835255" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/power_graph_risk_learning$example_usage.coverage" NAME="example_usage Coverage Results" MODIFIED="1774913824230" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>

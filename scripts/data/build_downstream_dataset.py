@@ -4,6 +4,7 @@ Creates sample-level features from Ef/Ef_nc and labels from dns_MW (of_reg).
 Outputs CSV/Parquet in data/processed/downstream/
 """
 from pathlib import Path
+import argparse
 import numpy as np
 import pandas as pd
 import h5py
@@ -12,7 +13,7 @@ ROOT = Path('data/powergraph/dataset_cascades_extracted/dataset_cascades')
 OUT = Path('data/processed/downstream')
 OUT.mkdir(parents=True, exist_ok=True)
 
-NETWORKS = ['ieee24', 'ieee39', 'ieee118', 'uk']
+NETWORKS = None  # None -> auto-discover from ROOT
 
 
 def deref_dataset(hf, ds, idx):
@@ -68,9 +69,30 @@ def build_for_network(net):
     return pd.DataFrame(rows)
 
 
+def discover_networks(root: Path) -> list[str]:
+    return sorted([p.name for p in root.iterdir() if p.is_dir()])
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Build downstream dataset from PowerGraph MAT files")
+    parser.add_argument("--networks", type=str, default="")
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+    if args.networks:
+        networks = [n.strip() for n in args.networks.split(",") if n.strip()]
+    elif NETWORKS:
+        networks = NETWORKS
+    else:
+        networks = discover_networks(ROOT)
+
+    if not networks:
+        raise ValueError(f"No networks found under {ROOT}")
+
     all_df = []
-    for net in NETWORKS:
+    for net in networks:
         print(f'Building network: {net}')
         df = build_for_network(net)
         print(f'  -> rows: {len(df)} | positive cls: {df.y_cls.mean():.3f}')

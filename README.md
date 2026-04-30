@@ -55,6 +55,11 @@ python scripts/data/build_dataset_v2_informative.py
 python scripts/core/train_compare_v2_informative.py
 ```
 
+### 3b) Compare multiple model families (LONO)
+```bash
+python scripts/core/train_compare_v2_models.py
+```
+
 ### 4) Calibrate decision threshold
 ```bash
 python scripts/core/final_v2_threshold_sweep_fast.py
@@ -76,6 +81,7 @@ python scripts/core/generate_paper_assets.py
 
 ### `scripts/core/`
 - `train_compare_v2_informative.py`
+- `train_compare_v2_models.py`
 - `final_v2_threshold_sweep_fast.py`
 - `export_v2_lono_scores.py`
 - `generate_paper_assets.py`
@@ -111,4 +117,7 @@ python scripts/core/generate_paper_assets.py
 - Python env: `~/miniforge3/bin/python`
 - macOS torch/OpenMP workaround:
   - `KMP_DUPLICATE_LIB_OK=TRUE`
-- Billing-sensitive work: prefer local/non-premium providers when possible.
+- Downstream build auto-discovers networks under `data/powergraph/dataset_cascades_extracted/dataset_cascades` (override via `--networks`).
+- Multi-model LONO defaults to `rf,xgb,gcn`.
+- GCN uses OPFData JSON graphs under `data/opfdata` and infers network IDs from `pglib_opf_case*` folders; this is separate from the downstream v2 tabular dataset.
+- Dependencies are captured in `requirements.txt` (XGBoost + torch/torch_geometric required for GCN).

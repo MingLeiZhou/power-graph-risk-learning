@@ -601,10 +601,3 @@ You, Y., Chen, T., Sui, Y., Chen, T., Wang, Z., & Shen, Y. (2020). Graph contras
 
 Zhou, J., Cui, G., Hu, S., Zhang, Z., Yang, C., Liu, Z., Wang, L., Li, C., & Sun, M. (2020). Graph neural networks: A review of methods and applications. *AI Open, 1*, 57–81.
 
----
-
-## Reference Integrity Checklist
-
-- ✅ **References verified (high confidence):** core ML, GNN, SSL, evaluation metrics, DuckDB, and foundational cascade/network-science entries listed above.
-- ⚠️ **References needing manual verification:** minor bibliographic formatting details (page ranges, conference proceedings style, and accent rendering in names) should be checked before final submission.
-- ➖ **Missing citation placeholders:** none required for core methodological claims in this draft.
